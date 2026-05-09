@@ -1,0 +1,18 @@
+# Python build / virtual environments
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+
+# Editor / OS
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Tooling private state
+.serena/
+.claude/
+.mcp.json
+.pi/
+.envrc
