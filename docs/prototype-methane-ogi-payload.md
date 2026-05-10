@@ -86,18 +86,9 @@ flowchart LR
   Power --> Gimbal
 ```
 
-### Front Face Sketch
+### Front Face Schematic
 
-```text
-┌──────────────────────────────────────────┐
-│ Methane OGI payload front plate           │
-│                                          │
-│   ○ Visible camera                        │
-│                                          │
-│        ● LWIR methane aperture            │
-│          lens → CH₄ filter → detector     │
-└──────────────────────────────────────────┘
-```
+![Prototype methane OGI payload front face showing the visible context camera, LWIR methane aperture, boresight alignment, and 7.675 µm methane optical path.](../figures/prototype-front-face.svg)
 
 ## Optical Stack
 
