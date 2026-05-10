@@ -37,7 +37,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy import ndimage
 
-from contrast_simulation import ALPHA_LWIR
+from contrast_simulation import ALPHA_LWIR, apparent_dT
 
 
 # ---------------------------------------------------------------------------
@@ -151,9 +151,10 @@ def generate_scene(scenario: Scenario) -> tuple[np.ndarray, GroundTruth]:
     frames = np.empty((T, H, W), dtype=np.float32)
     bboxes: list[tuple[int, int, int, int] | None] = []
 
+    # Use the same Beer-Lambert linearization as contrast_simulation.apparent_dT
+    # so the demo and the simulation are mathematically locked together.
     plume_amplitude_mK = (
-        (1.0 - np.exp(-scenario.plume_alpha * scenario.plume_CL))
-        * scenario.plume_dT
+        apparent_dT(scenario.plume_alpha, scenario.plume_CL, scenario.plume_dT)
         * 1000.0
     )
 
