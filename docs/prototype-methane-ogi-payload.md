@@ -4,7 +4,7 @@
 
 ## Executive Summary
 
-The prototype should be built as an **instrumented methane-OGI validation rig first, UAV payload second**. The core design correction from the follow-up research is that the custom prototype should **not** be based on a generic 8-14 µm thermal core unless the vendor proves usable response at 7.6-7.8 µm. The methane LWIR band of interest sits near 7.7 µm, so the sensor path must be specified as **7-14 µm / 7-8.5 µm OGI-capable**, not merely "LWIR".
+The prototype should be built as an **instrumented methane-OGI validation rig first, UAV payload second**. The core design correction from the follow-up research is that the custom prototype should **not** be based on a generic 8-14 µm thermal core unless the vendor proves usable response at the chosen v1 methane passband (7.55-7.80 µm using the Spectrogon BP-7675-240 nm; the report's §6.1 ideal design point is 7.7-8.0 µm — see the v1-vs-§6.1 trade note in **Optical Stack** below). The methane LWIR band of interest sits near 7.6-7.85 µm, so the sensor path must be specified as **7-14 µm / 7-8.5 µm OGI-capable**, not merely "LWIR".
 
 Recommended prototype strategy:
 
@@ -61,13 +61,13 @@ flowchart LR
   subgraph Pod["Methane OGI payload pod"]
     subgraph Front["Front optical plate"]
       RGB["Visible / low-light camera"]
-      Lens["LWIR lens\nverified at 7.6-7.8 µm"]
+      Lens["LWIR lens\nverified at 7.55-7.80 µm"]
       Filter["7.675 µm CH₄ bandpass filter"]
       Det["7-14 µm OGI-capable\nuncooled microbolometer"]
     end
 
     subgraph Aft["Aft electronics bay"]
-      Jetson["Jetson Orin Nano-class processor"]
+      Jetson["Jetson Orin Nano- to Orin NX-class\n(NX preferred if H.265 HW encode\nis on the critical path)"]
       Store["NVMe / SD raw recorder"]
       IMU["IMU + GPS / RTK timestamps"]
       Power["Isolated DC/DC rails"]
@@ -96,21 +96,27 @@ The procurement requirement is stricter than "LWIR camera". Every element in the
 
 ```mermaid
 flowchart LR
-  Scene["Scene radiance"] --> Lens["LWIR lens\ntransmits 7.6-7.8 µm"]
-  Lens --> Window["Optional protective window\nverified at 7.6-7.8 µm"]
+  Scene["Scene radiance"] --> Lens["LWIR lens\ntransmits 7.55-7.80 µm"]
+  Lens --> Window["Optional protective window\nverified at 7.55-7.80 µm"]
   Window --> CH4["CH₄ bandpass filter\n~7.675 µm"]
   CH4 --> Detector["7-14 µm OGI detector\nnot generic 8-14 µm unless proven"]
   Detector --> Frames["Raw / radiometric-ish LWIR frames"]
 ```
 
+### Filter Passband — v1 Procurement vs Report's §6.1 Design Point
+
+The report's §6.1 design point is a **7.7-8.0 µm / 300 nm bandwidth** filter (center ~7.85 µm), chosen to clear the H₂O continuum and discrete H₂O lines below ~7.5 µm. The closest commercial off-the-shelf filter the procurement search surfaced is the **Spectrogon BP-7675-240 nm** (center 7.675 µm, FWHM 240 nm → passband ~7.555-7.795 µm), which sits squarely on the methane Q-branch maximum but accepts modest additional H₂O attenuation vs the report's ideal passband.
+
+v1 procures the 7.675 µm filter as the fastest credible build path; **a 7.85-µm-center / 300-nm-BW filter (custom or alternative-vendor SKU) is a v2 procurement option** if humid-environment performance falls below the report §8 model. This is a deliberate engineering trade — capture more methane signal at the Q-branch peak now, optimize H₂O rejection later — not an oversight. The Gate 0 verification range below (**7.55-7.80 µm**) tracks the chosen v1 filter, not the report's ideal design point.
+
 ### Gate 0 Procurement Rule
 
 Do not buy the thermal core until the vendor confirms all of the following:
 
-- detector response includes **7.6-7.8 µm**;
+- detector response includes **7.55-7.80 µm** (the v1 Spectrogon filter passband; widen to 7.55-8.00 µm to keep the v2 7.85-µm-center filter optional);
 - detector package window does not block the methane band;
-- selected lens transmits at **7.6-7.8 µm**;
-- any protective window transmits at **7.6-7.8 µm**;
+- selected lens transmits at **7.55-7.80 µm**;
+- any protective window transmits at **7.55-7.80 µm**;
 - raw or minimally processed frame access is available;
 - filter angle-of-incidence shift is acceptable at the chosen f-number.
 
@@ -210,7 +216,7 @@ Generic 8-14 µm cores are useful only for payload plumbing tests: capture, sync
 
 The custom methane prototype should therefore be specified as:
 
-> **7-14 µm / 7-8.5 µm OGI-capable uncooled detector path with verified 7.6-7.8 µm throughput.**
+> **7-14 µm / 7-8.5 µm OGI-capable uncooled detector path with verified throughput across 7.55-7.80 µm (v1 Spectrogon filter); widen verification to 7.55-8.00 µm to keep the v2 7.85-µm-center filter optional.**
 
 ## Recommended Baseline Build
 
@@ -219,9 +225,11 @@ The custom methane prototype should therefore be specified as:
 ```text
 7-14 µm OGI-capable uncooled microbolometer
   + 7.675 µm CH₄ bandpass filter
-  + LWIR lens verified at 7.6-7.8 µm
+  + LWIR lens verified at 7.55-7.80 µm
   + boresighted visible camera
-  + Jetson Orin Nano-class recorder/processor
+  + Jetson Orin Nano- to Orin NX-class recorder/processor
+  (NX/AGX if on-module H.265 hardware encode is needed —
+   Orin Nano dropped dedicated NVENC vs Xavier NX)
   + IMU/GPS/gimbal telemetry
   + vibration-isolated pod
 ```
