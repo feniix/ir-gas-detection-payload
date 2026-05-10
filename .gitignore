@@ -12,7 +12,5 @@ __pycache__/
 
 # Tooling private state
 .serena/
-.claude/
-.mcp.json
-.pi/
 .envrc.local
+.claude/settings.local.json
