@@ -2,7 +2,7 @@
 
 ## §1 — Executive Summary
 
-This report defends a **small-UAV electro-optical payload built around an uncooled long-wave infrared (LWIR) detector with a 7.7-8.0 µm narrowband methane filter** for visualization-grade optical gas imaging (OGI) at 50-200 m operating altitude. The textbook answer — cooled mid-wave infrared (MWIR) at the 3.3 µm methane band — is the wrong one for this mission. Cryocooled MWIR carries an order-of-magnitude mass / cost penalty, 3-6 min cool-down per survey, and a Stirling-cooler bearing-wear failure mode that degrades on a vibrating airframe. Uncooled LWIR with a narrowband methane filter loses ~5× on raw column-density sensitivity at 5 K thermal differential (~200 ppm·m cooled MWIR vs ~1100 ppm·m uncooled LWIR, atmospheric loss folded in) but wins on every operational dimension for dispersed-asset survey: SWaP, cost, instant-on, cryocooler-MTBF risk, solar-contamination resistance, deployable integration. Architecture is commercially validated (FLIR GF77/GF77a handheld; MFE Detect LW for DJI M300/M350); the 50-200 m range envelope is modeled in §8, not field-validated.
+This report defends a **small-UAV electro-optical payload built around an uncooled long-wave infrared (LWIR) detector with a 7.7-8.0 µm narrowband methane filter** for visualization-grade optical gas imaging (OGI) at 50-200 m operating altitude. The textbook answer — cooled mid-wave infrared (MWIR) at the 3.3 µm methane band — is the wrong one for this mission. Cryocooled MWIR carries an order-of-magnitude mass / cost penalty, 3-6 min cool-down per survey, and a Stirling-cooler bearing-wear failure mode that degrades on a vibrating airframe. Uncooled LWIR with a narrowband methane filter loses ~5× on raw column-density sensitivity at 5 K thermal differential — ~200 ppm·m cooled MWIR (literature-anchored from Stanford-class field studies, atmospheric loss already implicit) vs ~1100 ppm·m uncooled LWIR (this report's §8 model at 50 m, std atm) — but wins on every operational dimension for dispersed-asset survey: SWaP, cost, instant-on, cryocooler-MTBF risk, solar-contamination resistance, deployable integration. Architecture is commercially validated (FLIR GF77/GF77a handheld; MFE Detect LW for DJI M300/M350); the 50-200 m range envelope is modeled in §8, not field-validated.
 
 **Cooled MWIR remains the right choice** when (a) the platform is fixed and SWaP is unconstrained, (b) the mission requires regulatory-grade low-emission-rate quantification, (c) plumes are very thin and near the detection floor, (d) backgrounds are cold and ΔT is marginal, or (e) cool-down time, cryocooler MTBF, and per-unit cost are not deciding constraints. **Operating envelope** (per §8): 50-150 m nominal at ΔT ≥ 5 K (~1100-1200 ppm·m floor); 200 m marginal under favorable conditions (~1380 ppm·m). The system is **survey-grade** — sized for compact high-emission / superemitter plumes in a heavy-tailed emissions landscape, not regulatory quantification at every leak. The integrated payload spans the LWIR detector + narrowband filter, germanium optics, 2-axis IMU-stabilized gimbal, co-boresighted visible-fusion camera, Jetson Orin Nano-class processor, encrypted radio link, and isolated payload power. Companion `bonus/` Python simulation generates the §4/§8 sensitivity plots and runs the detection-pipeline demo. Appendices E/F/G (low-level platforms, verification plan, diagnostics — separate supporting documents) cover the system-engineering layer.
 
@@ -33,7 +33,7 @@ The payload chooses the **small-UAV branch** of the assignment for dispersed-ass
 | Target | Value |
 |---|---|
 | Operating altitude | 50-150 m nominal, 200 m marginal |
-| Column-density floor | ~1000 ppm·m at ΔT ≥ 5 K (§8) |
+| Column-density floor | ~1100 ppm·m at ΔT ≥ 5 K (§8 model, 50 m, std atm) |
 | Required ΔT | ≥ 3 K stress / ≥ 5 K nominal |
 | Frame rate | 30-60 Hz |
 | Alarm latency | ≤ 200 ms event-to-overlay |
@@ -98,7 +98,7 @@ This is the spine of the report. The recommendation defends a non-obvious choice
 | Detector | InSb / HgCdTe / T2SL photon detector (cooled to 77-150 K) | VOx microbolometer (uncooled) |
 | **NETD (working)** | **15-25 mK** | **40 mK bare; 50 mK with warm-filter penalty** |
 | Filter-weighted α (normalized) | **~2.5×** stronger | reference (1.0) |
-| **CL_min @ ΔT = 5 K** (per §8) | **~200 ppm·m** | **~1000 ppm·m** (operational gap ~5×) |
+| **CL_min @ ΔT = 5 K** (per §8) | **~200 ppm·m** (literature-anchored, atmospheric loss implicit) | **~1100 ppm·m** at 50 m / **~1380 ppm·m** at 200 m (§8 model, std-atm τ_atm; operational gap ~5-7×) |
 | Spatial resolution | 12-15 µm pitch, up to 2048×2048 | 12 µm pitch, up to 1280×1024 |
 | Temporal response | Photon detector µs; 60-120 Hz native | Bolometer τ ~5-15 ms; 30-60 Hz native (adequate for plume dynamics) |
 | **SWaP (camera engine)** | **~0.4-1.0 kg, 6-15 W steady, 25-30 W cool-down** | **~30-100 g, 0.5-1 W, instant-on** (~10× mass, 5-10× power) |
@@ -107,7 +107,7 @@ This is the spine of the report. The recommendation defends a non-obvious choice
 | **Cryocooler MTBF** | Linear Stirling ~20-30 kh; rotary 10-15 kh legacy / 30-50 kh modern (Thales RMs1/RM2 per Cauquil 2017, Griot 2023); **degrades on vibrating airframes** | None — no moving parts |
 | Solar contamination | 3-5 µm band-integrated solar non-trivial; specular glints saturate | 8-12 µm band-integrated solar 2-3 orders smaller; narrowband filter rejects most remaining tail |
 | Vibration tolerance | Cryocooler bearing wear is the dominant failure mode under airframe vibration | Bolometer τ provides low-pass; airframe-specific test still required |
-| Regulatory compliance | Mature Appendix K cooled-MWIR precedent (product/config-specific) | MFE Detect LW vendor-stated OOOOa/b/c + Appendix K @ 19 g/hr; FLIR GF77 NECL <100 ppm·m @ 1 m, ΔT=10°C |
+| Regulatory compliance | Mature certified Appendix K precedent for cooled-MWIR OGI (product- and configuration-specific) | **Vendor-stated** OOOOa/b/c + Appendix K @ 19 g/hr (MFE Detect LW); FLIR GF77 NECL <100 ppm·m @ 1 m, ΔT=10°C is a bench spec, not a public Appendix K certification — different evidence class than the cooled-MWIR column |
 
 Working values trace to `bonus/data/facts.md`; CL_min figures from `bonus/contrast_simulation.py`. CL_min-vs-ΔT plot:
 
@@ -115,7 +115,7 @@ Working values trace to `bonus/data/facts.md`; CL_min figures from `bonus/contra
 
 ### 4.2 — Reading the chart honestly
 
-Cooled MWIR sits ~5× below uncooled LWIR across the whole ΔT range — that is the modeled truth, owned. The recommendation does not rest on closing that gap; it rests on the proposition that *for this mission*, the modeled gap is operationally acceptable while uncooled's SWaP / cost / instant-on / MTBF / solar advantages are decisive. The ΔT values are modeled cases (5 K nominal, 3 K stress, 10 K favorable), not guaranteed field conditions; below ΔT ≈ 2 K, uncooled-LWIR CL_min diverges sharply and the trade flips toward cooled (§4.4).
+Cooled MWIR sits ~5× below uncooled LWIR across the whole ΔT range — that is the modeled truth, owned. The recommendation does not rest on closing that gap; it rests on the proposition that *for this mission*, the modeled gap is operationally acceptable while uncooled's SWaP / cost / instant-on / MTBF / solar advantages are decisive. The ΔT values are modeled cases (5 K nominal, 3 K stress, 10 K favorable), not guaranteed field conditions; CL_min only mathematically diverges when ΔT approaches NETD (~50 mK), but it climbs above ~2500 ppm·m below ΔT ≈ 2 K — operationally unusable for survey, where the trade flips toward cooled (§4.4).
 
 ### 4.3 — Recommendation
 
@@ -134,6 +134,8 @@ The recommendation is mission-conditional. **Cooled MWIR is right** when one of 
 ### 4.5 — Precedent
 
 Two production systems demonstrate the architecture: **FLIR GF77/GF77a** (uncooled LWIR, 7-8.5 µm methane-filtered handheld/fixed; published methane NECL <100 ppm·m at ΔT=10 °C, 1 m) and **MFE Detect LW** (uncooled-LWIR UAV payload for DJI M300/M350, vendor-stated OOOOa/b/c + Appendix K @ 19 g/hr, 17 g/hr OGMP-2.0). No public 50-200 m ppm·m curve was located; the §8 model provides that estimate. Defensible framing: architecture and platform integration are commercially validated; the specific range envelope is an engineering estimate.
+
+**Reconciling vendor-stated 19 g/hr with the §8 ~1100 ppm·m floor.** The two are not directly comparable without plume geometry. Appendix K's 19 g/hr methane benchmark is at a **2 m viewing distance** with controlled release into a fan-driven 1 m/s flow (§6.1.2 of the rule). Our §8 floor is **modeled at 50-200 m UAV standoff**, where Ravikumar's empirical power-law degradation with distance applies. Running our §8.2 box model in reverse, a 19 g/hr release through a compact ~0.05 m² cross-section at 1 m/s is ~80 ppm·m over a 1 m path — well below our 1100 ppm·m floor at 50 m, which is exactly why this is a **survey-grade tool for kg/hr-class superemitters**, not a UAV-standoff Appendix K certification path. MFE's compliance claim is at the rule's 2 m benchmark, not at this report's operating altitude.
 
 ---
 
@@ -203,13 +205,13 @@ Methane's ν₄ band runs from ~7.4 µm (P-branch) to ~8.0 µm (R-branch) with t
 
 In our uncooled architecture the filter is **warm** — at ambient in the front-end optical train, not in a dewar. Self-emission is *not* a uniform offset that two-point NUC removes; it carries (1) a spatial gradient from cosine-fourth falloff plus filter-mount temperature non-uniformity, (2) spectral structure from thin-film bandpass blue-shift with angle of incidence (the f/1-class marginal ray can far exceed the chief-ray angle, so the full ray cone — not just the FOV edge — must be in the passband budget), and (3) shot noise from the filter's own thermally generated photon flux, which NUC cannot remove because shot noise is not a fixed pattern.
 
-The design budgets a **~10-15 mK effective-NETD penalty** (from ~40 mK bare-sensor to ~50 mK effective). Mitigation stack: (a) passive filter thermal stabilization (mass + heatsinking holds filter temperature within ±0.5 °C of ambient drift; active TEC adds ~0.5 W if extended-mission stability demands it); (b) **NUC scheduled to filter-temperature drift** rather than fixed cadence; (c) **angle-of-incidence-managed implementation** — procure a low-angle-shift methane bandpass characterized for the selected f-number, or place the filter near a pupil / collimated section, or relax toward f/1.4-f/2.0 if filter shift dominates SNR. The penalty is folded into `bonus/contrast_simulation.py` and §8.
+The design budgets a **~10-15 mK effective-NETD penalty** (from ~40 mK bare-sensor to ~50 mK effective) — explicitly an *engineering allowance* pending bench-radiometric measurement (Appendix F V11), not a derived photon-count budget; the full envelope sits at 50-65 mK per `bonus/data/facts.md` §3.2 until measured. Mitigation stack: (a) passive filter thermal stabilization (mass + heatsinking holds filter temperature within ±0.5 °C of ambient drift; active TEC adds ~0.5 W if extended-mission stability demands it); (b) **NUC scheduled to filter-temperature drift** rather than fixed cadence; (c) **angle-of-incidence-managed implementation** — procure a low-angle-shift methane bandpass characterized for the selected f-number, or place the filter near a pupil / collimated section, or relax toward f/1.4-f/2.0 if filter shift dominates SNR. The penalty is folded into `bonus/contrast_simulation.py` and §8.
 
 ### 6.4 — Worked FOV / IFOV / GSD
 
 ![FOV and GSD sketch for a 640 px thermal sensor at 100 m AGL and ~14° horizontal FOV.](figures/fov-gsd-geometry.png)
 
-Geometry: 640×512 array at 12 µm pitch, ~14° HFOV → focal length $f = 3.84 / \tan(7°) = 31.2$ mm; VFOV = 11.2°; IFOV = 12 µm / 31.2 mm = 384 µrad/pixel. **GSD: 1.9 cm/px at 50 m, 3.8 cm/px at 100 m, 7.7 cm/px at 200 m.** A 0.3-1 m valve-fitting plume projects to ~8-25 pixels across at 100 m — practical resolvability still depends on contrast, MTF, motion blur, plume orientation, and registration error.
+Geometry: 640×512 array at 12 µm pitch, ~14° HFOV → focal length $f = 3.84 / \tan(7°) = 31.2$ mm; VFOV = 11.2°; IFOV = 12 µm / 31.2 mm = 384 µrad/pixel. **GSD: 1.9 cm/px at 50 m, 3.8 cm/px at 100 m, 7.7 cm/px at 200 m.** A 0.3-1 m valve-fitting plume projects to ~8-25 pixels across at 100 m, but only ~4-13 pixels at 200 m. The §8 CL_min model is a **radiometric ceiling**, not an operational floor — it assumes the plume fills the pixel. At 200 m, sub-pixel fill factor for wispy plumes plus optical MTF rolloff degrade real-world CL_min by an empirically observed 1.5-3× (consistent with Ravikumar's distance power law), which is why the executive summary frames 200 m as marginal rather than nominal. Practical resolvability also depends on contrast, motion blur, plume orientation, intermittency, and registration error.
 
 ### 6.5 — f-number
 
@@ -264,7 +266,7 @@ All values trace to `bonus/data/facts.md` (cited literature) or `bonus/contrast_
 
 ### 8.1 — Worked CL_min at altitude endpoints
 
-Plug into $CL_{\mathrm{min}} \approx \mathrm{NETD} / (\alpha \cdot \Delta T)$ with $\alpha_{\mathrm{LWIR}} = 1.0 \times 10^{-5}$ per ppm·m, effective NETD = 50 mK (warm-filter penalty), and atmospheric τ_atm folded in as NETD′ = NETD / τ_atm (illustrative standard-atmosphere short-path values, requiring MODTRAN / HITRAN validation before procurement). Passive imaging measures line-of-sight absorption, so the table reports **minimum column density**; an equivalent ppm requires an assumed plume thickness (e.g., 1100 ppm·m = 1100 ppm @ 1 m, ~220 ppm @ 5 m).
+Plug into $CL_{\mathrm{min}} \approx \mathrm{NETD} / (\alpha \cdot \Delta T)$ with $\alpha_{\mathrm{LWIR}} = 1.0 \times 10^{-5}$ per ppm·m (engineering-calibrated; see App A and `facts.md` §1 — *not* derived from line-by-line passband integration), effective NETD = 50 mK (warm-filter penalty per §6.3), and atmospheric τ_atm folded in as NETD′ = NETD / τ_atm. **τ_atm values are working assumptions** drawn from the standard-atmosphere literature range (`facts.md` §2: 0.80-0.90 std-atm, 0.65-0.80 humid) with geometric extrapolation to 200 m; this report has not run MODTRAN, and that bench is named as a hardening item before procurement. Passive imaging measures line-of-sight absorption, so the table reports **minimum column density**; an equivalent ppm requires an assumed plume thickness (e.g., 1100 ppm·m = 1100 ppm @ 1 m, ~220 ppm @ 5 m).
 
 | Altitude | τ_atm (std atm) | Effective NETD | CL_min @ ΔT = 5 K | @ 10 K | @ 3 K |
 |---|---:|---:|---:|---:|---:|
@@ -276,7 +278,7 @@ Humid (tropical) bounds push CL_min up ~30%; dry (arid winter) bounds pull it do
 
 ### 8.2 — Leak-rate sanity check
 
-A coarse control-volume estimate (uniform mixing in cross-section A, wind U, $x_{CH4} \approx \dot n_{CH4} / (40.9 \cdot U \cdot A)$): a 1 kg/hr release at U = 1 m/s through a compact 0.1 m² cross-section gives ~4200 ppm·m over a 1 m path; 100 g/hr through the same cross-section is ~420 ppm·m. This frames the system as a **high-emission survey tool**: kg/hr-class compact plumes exceed the modeled floor, while lower-rate or diffuse plumes fall below it and require closer inspection or cooled-MWIR / active methods.
+A coarse control-volume estimate (uniform mixing in cross-section A, wind U): mole fraction $x_{CH_4} \approx \dot n_{CH_4} / (n_{\mathrm{air}} \cdot U \cdot A)$, where $\dot n_{CH_4}$ is methane molar flow (mol/s) and $n_{\mathrm{air}} = P/(RT) \approx 40.9$ mol/m³ at 298 K, 1 atm. A 1 kg/hr methane release is 0.0174 mol/s; at U = 1 m/s through a compact 0.1 m² cross-section, $x_{CH_4} \approx 0.0174 / (40.9 \cdot 1 \cdot 0.1) \approx 4200$ ppm, or ~4200 ppm·m over a 1 m path. 100 g/hr through the same cross-section is ~420 ppm·m. This frames the system as a **high-emission survey tool**: kg/hr-class compact plumes exceed the modeled floor, while lower-rate or diffuse plumes fall below it and require closer inspection or cooled-MWIR / active methods.
 
 ### 8.3 — Apparent-ΔT contrast curves
 
@@ -284,7 +286,7 @@ A coarse control-volume estimate (uniform mixing in cross-section A, wind U, $x_
 
 ### 8.4 — Frame-rate and latency budget
 
-Pipeline runs at 30-60 Hz native (per-frame budget 33 ms / 16 ms). Jetson Orin Nano-class is a plausible size point; final margin must be measured on the selected module, especially if H.265 video encode shares CPU/GPU. Target stage budget: rolling temporal median (CUDA / approximate running-quantile, not naive full-window) ~5-8 ms; Gaussian smoothing + connected components ~1-3 ms via optimized kernels (the demo uses SciPy/NumPy); cross-modal ORB/AKAZE on 1080p visible 5-10 ms; persistence + FP rejection < 1 ms; overlay rendering < 2 ms. **Total ~12-20 ms typical, ≤ 25 ms under load** — at 30 Hz leaves ≥ 8 ms headroom if encoding is bounded; 60 Hz drops adaptively to 30 Hz under load. **End-to-end alarm latency** ≤ 200 ms is a bench target for onboard detection + metadata; full-video overlay latency is platform-dependent (FPV tens of ms, enterprise links 100-200+ ms after encode/radio/decode), so low-latency metadata is sent first and full video is verified separately.
+Pipeline runs at 30-60 Hz native (per-frame budget 33 ms / 16 ms). Jetson **Orin Nano- to Orin NX-class** is the size point; the final SKU is gated by hardware-encode availability — Orin Nano dropped the dedicated NVENC vs Xavier NX, so on-module H.265 at 25 Mbps requires either software encode (load-bearing for the SWaP/latency budget — risk item) or stepping up to Orin NX/AGX where NVENC is present. Target stage budget: rolling temporal median (CUDA / approximate running-quantile, not naive full-window) ~5-8 ms; Gaussian smoothing + connected components ~1-3 ms via optimized kernels (the demo uses SciPy/NumPy); cross-modal ORB/AKAZE on 1080p visible 5-10 ms; persistence + FP rejection < 1 ms; overlay rendering < 2 ms. **Total ~12-20 ms typical, ≤ 25 ms under load** — at 30 Hz leaves ≥ 8 ms headroom if encoding is bounded; 60 Hz drops adaptively to 30 Hz under load. **End-to-end alarm latency** ≤ 200 ms is a bench target for onboard detection + metadata; full-video overlay latency is platform-dependent (FPV tens of ms, enterprise links 100-200+ ms after encode/radio/decode), so low-latency metadata is sent first and full video is verified separately.
 
 ### 8.5 — Algorithm-pipeline benchmark — synthetic data
 
@@ -381,25 +383,6 @@ The contrast-vs-CL simulation in `bonus/contrast_simulation.py` produces the two
 - Wolfe, W.L., Zissis, G.J. 1989. *The Infrared Handbook*, 2nd ed. ERIM/SPIE.
 
 
-## Appendix E — Low-Level Platforms (supplement)
+## Supporting Documents
 
-System-engineering layer below §5 — sensor bus (MIPI CSI-2 / USB3 Vision / GigE Vision), real-time scheduling (Linux PREEMPT_RT + dedicated gimbal MCU), driver-level NUC, DMA / buffer management, firmware boot / watchdog / recovery, power management, gimbal MCU partition, bring-up tooling. See `docs/appendix-e-low-level-platforms.md` for the full supplement; `bonus/data/low-level-talking-points.md` is the live-discussion cheat sheet.
-
-## Appendix F — System Integration and Verification Plan (supplement)
-
-V&V matrix mapping §2.3 / §5.2 / §6 / §8 requirements to pass criteria and verification methods (V1-V14: CL_min, day/night ops, alarm latency, mass / power, frame rate, MTBF, false-positive rate, vibration, calibration stability, cross-modal registration, NUC recovery, fleet MTBF). See `docs/appendix-f-verification.md`.
-
-## Appendix G — Calibration, Diagnostics, and Field Support (supplement)
-
-Telemetry signals (filter / FPA temperature, NUC log, dropped-frame counter, processor load, cross-modal sync residual, radio link, GPS / RTK, payload power), fault-mode fallbacks, and field-support workflow. See `docs/appendix-g-diagnostics.md`.
-
----
-
-*Companion artifacts:*
-
-- `bonus/data/facts.md` — cited-numbers source-of-truth (every quantitative claim in the report traces here)
-- `bonus/data/precedent-search.md` — log of the precedent search that supports §1 / §4.5
-- `bonus/contrast_simulation.py` — simulation source (run via `uv run python contrast_simulation.py`)
-- `bonus/detection_demo.py` — algorithm-pipeline demo source
-- `bonus/tests/` — pytest test suites (47 scenarios; run via `uv run pytest`)
-- `bonus/outputs/` — generated plots and benchmark JSON
+The system-engineering layer is in three supplements alongside this report: **Appendix E** `docs/appendix-e-low-level-platforms.md` (sensor bus, RT scheduling, driver-level NUC, DMA, firmware boot, gimbal MCU, bring-up tooling); **Appendix F** `docs/appendix-f-verification.md` (V&V matrix V1-V14: CL_min, day/night, latency, mass/power, vibration, calibration, registration, NUC recovery, fleet MTBF); **Appendix G** `docs/appendix-g-diagnostics.md` (telemetry, fault-mode fallbacks, field-support workflow). Companion artifacts: `bonus/data/facts.md` (cited-numbers source-of-truth), `bonus/data/precedent-search.md`, `bonus/data/low-level-talking-points.md` (live-discussion cheat sheet for Appendix E), `bonus/contrast_simulation.py`, `bonus/detection_demo.py`, `bonus/tests/` (47 deterministic pytest scenarios), `bonus/outputs/`.
